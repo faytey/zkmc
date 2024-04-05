@@ -7,12 +7,15 @@ trait IErc20<TContractState> {
     fn balanceOf(self: @TContractState, address: ContractAddress) -> u256;
     fn mint(ref self: TContractState, recipient: ContractAddress, amount: u256) -> bool;
     fn transfer(ref self: TContractState, recipient: ContractAddress, amount: u256) -> bool;
+    fn get_name(self: @TContractState) -> felt252; 
+    fn get_symbol(self: @TContractState) -> felt252; 
+    fn get_total_supply(self: @TContractState) -> u256; 
+    fn get_decimal(self: @TContractState) -> u8; 
 }
 
 #[starknet::contract]
 mod ERC20 {
     use starknet::{ContractAddress, get_caller_address, get_contract_address};
-    // use cairo_smart_contract::erc20::IErc20Trai;
     use core::option::OptionTrait;
     use core::traits::TryInto;
 
@@ -84,6 +87,27 @@ mod ERC20 {
             assert(self.balances.read(recipient) > rec_old_balance, 'Unsuccessful tx');
             true
         }
+
+         fn get_name(self: @ContractState) -> felt252 {
+            let name: felt252 = self.token_name.read();
+            name
+         }
+
+        fn get_symbol(self: @ContractState) -> felt252 {
+            let symbol: felt252 = self.symbol.read();
+            return symbol;
+        }
+
+        fn get_total_supply(self: @ContractState) -> u256 {
+            let supply: u256 = self.total_supply.read();
+            supply
+        }
+
+        fn get_decimal(self: @ContractState) -> u8 {
+            let decimal: u8 = self.decimal.read();
+            decimal
+        }
+
     }
     
 }
