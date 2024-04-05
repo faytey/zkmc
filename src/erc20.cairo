@@ -1,7 +1,7 @@
 use starknet::{ContractAddress, get_caller_address, contract_address_const};
 
 #[starknet::interface]
-trait erc20Traits<TContractState> {
+trait IErc20<TContractState> {
     fn approve(ref self: TContractState, spender: ContractAddress, amount: u256) -> bool;
     fn allowance(self: @TContractState, owner: ContractAddress, spender: ContractAddress) -> u256;
     fn balanceOf(self: @TContractState, address: ContractAddress) -> u256;
@@ -12,7 +12,9 @@ trait erc20Traits<TContractState> {
 #[starknet::contract]
 mod ERC20 {
     use starknet::{ContractAddress, get_caller_address, get_contract_address};
-    use cairo_smart_contract::erc20::erc20Traits;
+    // use cairo_smart_contract::erc20::IErc20Trai;
+    use core::option::OptionTrait;
+    use core::traits::TryInto;
 
     #[storage]
     struct Storage {
@@ -39,16 +41,15 @@ mod ERC20 {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, deployer: ContractAddress) {
-    
+    fn constructor(ref self: ContractState) {
         self.token_name.write('ZKMasterClass');
         self.symbol.write('ZKMC');
         self.decimal.write(18);
-        self.owner.write(deployer);
+        self.owner.write(0x03af13f04C618e7824b80b61e141F5b7aeDB07F5CCe3aD16Dbd8A4BE333A3Ffa.try_into().unwrap());
     }
 
     #[abi(embed_v0)]
-    impl erc20Impl of erc20Traits<ContractState>{
+    impl erc20Impl of super::IErc20<ContractState>{
 
         fn approve(ref self: ContractState, spender: ContractAddress, amount: u256) -> bool {
             self.allowances.write((get_caller_address(), spender), amount);
@@ -67,8 +68,9 @@ mod ERC20 {
 
         fn mint(ref self: ContractState, recipient: ContractAddress, amount: u256) -> bool {
             let prev_total = self.total_supply.read();
+            let prev_balance = self.balances.read(recipient);
             self.total_supply.write(prev_total + amount);
-            self.balances.write(recipient, amount);
+            self.balances.write(recipient, prev_balance + amount);
             self.emit(Mint {recipient: recipient, amount: amount});
             true
         }
